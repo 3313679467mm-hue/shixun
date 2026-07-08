@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>登录 - 王包</title>
+    <style>
+      :root {
+        --bg: #111;
+        --panel: rgba(255, 255, 255, 0.05);
+        --ink: #fff;
+        --muted: rgba(255, 255, 255, 0.6);
+        --line: rgba(255, 255, 255, 0.15);
+        --primary: #ff6b35;
+        --primary-dark: #e85a2a;
+        --danger: #ff4b4b;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        overflow: hidden;
+        color: var(--ink);
+        background: #111;
+        font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding-left: 8%;
+        position: relative;
+      }
+
+      .bg-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -2;
+        overflow: hidden;
+        background: #111;
+      }
+
+      .bg-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.85);
+        transform: scale(1.05);
+      }
+
+      .bg-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to right, rgba(20, 5, 5, 0.75) 0%, rgba(40, 10, 10, 0.3) 50%, rgba(0, 0, 0, 0.1) 100%);
+        z-index: -1;
+      }
+
+      #particle-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      .form-shell {
+        position: relative;
+        z-index: 10;
+        width: min(440px, 100%);
+        padding: 50px 40px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 25px 45px rgba(0, 0, 0, 0.4);
+        opacity: 0;
+        transform: translateY(30px);
+        animation: fadeInUp 0.8s ease forwards 0.5s;
+      }
+
+      @keyframes fadeInUp {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .brand-mark {
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        margin-bottom: 22px;
+        border-radius: 12px;
+        color: #fff;
+        background: linear-gradient(135deg, #ff4b1f, #ff9068);
+        font-weight: 700;
+        font-size: 22px;
+        box-shadow: 0 12px 28px rgba(255, 75, 31, 0.3);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(28px, 4vw, 42px);
+        line-height: 1.15;
+        font-weight: 650;
+        letter-spacing: 1px;
+        background: linear-gradient(to right, #fff, #ffbb73);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      p {
+        margin: 10px 0 0;
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 14px;
+      }
+
+      .tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin: 24px 0 16px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .tabs button,
+      .role-options button {
+        border: 1px solid transparent;
+        color: rgba(255, 255, 255, 0.7);
+        background: transparent;
+        cursor: pointer;
+        transition: all 0.25s ease;
+      }
+
+      .tabs button {
+        min-height: 40px;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+
+      .tabs button.active {
+        border-color: rgba(255, 140, 0, 0.4);
+        background: rgba(255, 75, 31, 0.15);
+        color: #ffbb73;
+      }
+
+      .role-panel {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .role-title {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .role-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .role-options button {
+        min-height: 40px;
+        padding: 6px;
+        border-color: var(--line);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 13px;
+      }
+
+      .role-options button.active {
+        color: #fff;
+        border-color: var(--primary);
+        background: linear-gradient(45deg, #ff4b1f, #ff9068);
+      }
+
+      form {
+        display: grid;
+        gap: 14px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field span {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .input-wrap {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .input-wrap:focus-within {
+        border-color: rgba(255, 140, 0, 0.6);
+        background: rgba(255, 75, 31, 0.08);
+        box-shadow: 0 0 0 3px rgba(255, 75, 31, 0.15);
+      }
+
+      input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        color: #fff;
+        background: transparent;
+        font: inherit;
+      }
+
+      input::placeholder {
+        color: rgba(255, 255, 255, 0.4);
+      }
+
+      .input-wrap input {
+        padding: 0 14px;
+      }
+
+      .password-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+      }
+
+      .icon-button {
+        width: 38px;
+        height: 38px;
+        margin-right: 4px;
+        display: grid;
+        place-items: center;
+        border: 0;
+        border-radius: 8px;
+        color: var(--muted);
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .icon-button:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .form-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .remember {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .remember input {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--primary);
+      }
+
+      .submit {
+        min-height: 48px;
+        border: 0;
+        border-radius: 24px;
+        color: #fff;
+        background: linear-gradient(45deg, #ff4b1f, #ff9068, #ff4b1f);
+        background-size: 200% auto;
+        cursor: pointer;
+        font-weight: 650;
+        font-size: 16px;
+        box-shadow: 0 5px 15px rgba(255, 75, 31, 0.4);
+        transition: all 0.3s ease;
+      }
+
+      .submit:hover {
+        background-position: right center;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 75, 31, 0.6);
+      }
+
+      .submit:disabled {
+        cursor: wait;
+        opacity: 0.68;
+        transform: none;
+      }
+
+      .message {
+        min-height: 20px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .message.error {
+        color: var(--danger);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          justify-content: center;
+          padding-left: 0;
+        }
+
+        .form-shell {
+          width: 90%;
+          padding: 40px 28px;
+        }
+
+        .role-options {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-layer">
+      <video class="bg-video" autoplay loop muted playsinline poster="/static/login-hero.jpg">
+        <source src="/static/login.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div class="bg-overlay"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="form-shell">
+      <span class="brand-mark">王</span>
+      <h1 id="title">登录系统</h1>
+      <p id="hint">请输入账号密码进入服务台。</p>
+
+      <div id="tabs" class="tabs">
+        <button type="button" data-mode="login" class="active">登录</button>
+        <button type="button" data-mode="register">注册</button>
+      </div>
+
+      <div id="rolePanel" class="role-panel">
+        <div class="role-title">选择登录身份</div>
+        <div class="role-options">
+          <button type="button" data-role-name="超级管理员">超级管理员</button>
+          <button type="button" data-role-name="知识库管理员">知识库管理员</button>
+          <button type="button" data-role-name="普通用户" class="active">普通用户</button>
+        </div>
+      </div>
+
+      <form id="authForm">
+        <label class="field">
+          <span>用户名</span>
+          <div class="input-wrap">
+            <input name="username" autocomplete="username" placeholder="请输入用户名" required />
+          </div>
+        </label>
+
+        <label class="field">
+          <span>密码</span>
+          <div class="input-wrap">
+            <div class="password-row">
+              <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required />
+              <button id="togglePassword" class="icon-button" type="button" aria-label="显示密码">
+                <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </label>
+
+        <label id="emailField" class="field">
+          <span>邮箱</span>
+          <div class="input-wrap">
+            <input id="email" name="email" type="email" autocomplete="email" placeholder="邮箱（可选）" />
+          </div>
+        </label>
+
+        <div class="form-row">
+          <label class="remember"><input name="remember" type="checkbox" checked /> 记住登录状态</label>
+        </div>
+
+        <button id="submitBtn" class="submit" type="submit">登录</button>
+      </form>
+
+      <div id="message" class="message"></div>
+    </div>
+
+    <script>
+      const state = { mode: "login", roleName: "普通用户", showPassword: false };
+      const $ = (selector) => document.querySelector(selector);
+
+      async function request(path, options = {}) {
+        const headers = new Headers(options.headers || {});
+        if (options.body) headers.set("Content-Type", "application/json");
+        const response = await fetch(path, { ...options, headers });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "请求失败");
+        return data;
+      }
+
+      function setMessage(text, isError = false) {
+        $("#message").textContent = text;
+        $("#message").classList.toggle("error", isError);
+      }
+
+      function setMode(mode) {
+        state.mode = mode;
+        const isSetup = mode === "setup";
+        const isRegister = mode === "register";
+        $("#title").textContent = isSetup ? "初始化超级管理员" : isRegister ? "注册普通用户" : "登录系统";
+        $("#hint").textContent = isSetup
+          ? "首次使用需要先创建一个超级管理员账号。"
+          : isRegister
+            ? "注册后仅进入对话咨询界面。"
+            : "请输入账号密码进入服务台。";
+        $("#submitBtn").textContent = isSetup ? "创建管理员" : isRegister ? "注册并进入" : "登录";
+        $("#tabs").classList.toggle("hidden", isSetup);
+        $("#rolePanel").classList.toggle("hidden", mode !== "login");
+        $("#emailField").classList.toggle("hidden", mode === "login");
+        $("#email").placeholder = isSetup ? "管理员邮箱（可选）" : "邮箱（可选）";
+        document.querySelectorAll("[data-mode]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.mode === mode);
+        });
+        setMessage("");
+      }
+
+      async function init() {
+        const status = await request("/api/auth/status");
+        setMode(status.initialized ? "login" : "setup");
+      }
+
+      $("#tabs").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-mode]");
+        if (button) setMode(button.dataset.mode);
+      });
+
+      $("#rolePanel").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-role-name]");
+        if (!button) return;
+        state.roleName = button.dataset.roleName;
+        document.querySelectorAll("[data-role-name]").forEach((item) => {
+          item.classList.toggle("active", item === button);
+        });
+      });
+
+      $("#togglePassword").addEventListener("click", () => {
+        state.showPassword = !state.showPassword;
+        $("#password").type = state.showPassword ? "text" : "password";
+        $("#togglePassword").setAttribute("aria-label", state.showPassword ? "隐藏密码" : "显示密码");
+        $("#eyeIcon").innerHTML = state.showPassword
+          ? '<path d="m3 3 18 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M10.7 5.2A10.6 10.6 0 0 1 12 5c6 0 9.5 7 9.5 7a17 17 0 0 1-3 4.1M8.5 6.2C4.7 8 2.5 12 2.5 12s3.5 7 9.5 7c1.4 0 2.7-.3 3.8-.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>'
+          : '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8" />';
+      });
+
+      $("#authForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const payload = Object.fromEntries(new FormData(form).entries());
+        payload.remember = form.elements.remember.checked;
+        if (state.mode === "login") {
+          payload.roleName = state.roleName;
+        }
+        const endpoint =
+          state.mode === "setup"
+            ? "/api/auth/setup"
+            : state.mode === "register"
+              ? "/api/auth/register"
+              : "/api/auth/login";
+        $("#submitBtn").disabled = true;
+        setMessage("正在处理...");
+        try {
+          const data = await request(endpoint, { method: "POST", body: JSON.stringify(payload) });
+          localStorage.setItem("authToken", data.token);
+          window.location.href = "/static/index.html";
+        } catch (error) {
+          setMessage(error.message, true);
+        } finally {
+          $("#submitBtn").disabled = false;
+        }
+      });
+
+      // --- 粒子特效 ---
+      const canvas = $("#particle-canvas");
+      const ctx = canvas.getContext("2d");
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      let particlesArray = [];
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * (canvas.width * 0.5);
+          this.y = canvas.height + Math.random() * 50;
+          this.size = Math.random() * 2.5 + 0.5;
+          this.speedX = Math.random() * 1.5 - 0.75;
+          this.speedY = Math.random() * -2 - 1;
+          const colors = ["255, 69, 0", "255, 140, 0", "255, 215, 0", "255, 100, 50"];
+          this.baseColor = colors[Math.floor(Math.random() * colors.length)];
+          this.opacity = 1;
+          this.fadeSpeed = Math.random() * 0.01 + 0.005;
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.opacity -= this.fadeSpeed;
+        }
+        draw() {
+          ctx.fillStyle = `rgba(${this.baseColor}, ${this.opacity})`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function initParticles() {
+        const count = Math.floor(window.innerWidth / 8);
+        for (let i = 0; i < count; i++) {
+          particlesArray.push(new Particle());
+        }
+      }
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = particlesArray.length - 1; i >= 0; i--) {
+          particlesArray[i].update();
+          particlesArray[i].draw();
+          if (particlesArray[i].opacity <= 0 || particlesArray[i].y < 0) {
+            particlesArray.splice(i, 1);
+            particlesArray.push(new Particle());
+          }
+        }
+        requestAnimationFrame(animateParticles);
+      }
+
+      initParticles();
+      animateParticles();
+
+      init().catch((error) => setMessage(error.message, true));
+    </script>
+  </body>
+</html>
